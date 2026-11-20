@@ -1,0 +1,66 @@
+# Halium 13 deviceinfo — OnePlus 8T (KB2001, kebab), SM8250
+# DRAFT 2026-11-20. Boot geometry and cmdline are read from the Pixel Experience Plus 13
+# boot.img (header v2, OS 13.0.0, patch 2024-01), which carries the same vendor we build against.
+# Kernel config/source from LineageOS android_device_oneplus_sm8250-common (BoardConfigCommon.mk).
+# Not built or booted yet. See ../PLAN.md.
+
+deviceinfo_name="OnePlus 8T"
+deviceinfo_manufacturer="OnePlus"
+deviceinfo_codename="kebab"
+deviceinfo_arch="aarch64"
+# No deviceinfo_kernel_arch: build-kernel.sh builds the cross prefix from it (arm64-linux-android-, which
+# does not exist). Leaving it unset uses aarch64 -> aarch64-linux-android-, and ARCH=arm64 is derived.
+
+deviceinfo_halium_version="13"
+deviceinfo_ubuntu_touch_release="24.04-2.x"
+
+# Downstream Qualcomm 4.19 kernel, not GKI. lineage-20 is the Android 13 era branch and is the kernel
+# Pixel Experience 13 (our vendor source) was built from; lineage-24.0 would not match this vendor.
+deviceinfo_kernel_source="https://github.com/LineageOS/android_kernel_oneplus_sm8250.git"
+deviceinfo_kernel_source_branch="lineage-20"
+# lineage-24.0 uses "vendor/kona-perf_defconfig vendor/oplus.config", but lineage-20 (4.19.306) has no
+# oplus.config: verified 2026-11-20, only kona-perf_defconfig exists. halium.config goes last.
+# The 8T's own dts live in arch/arm64/boot/dts/vendor/19805 (project code), not under qcom/.
+deviceinfo_kernel_defconfig="vendor/kona-perf_defconfig halium.config"
+deviceinfo_kernel_clang_compile="true"
+deviceinfo_kernel_llvm_compile="false"
+deviceinfo_kernel_image_name="Image.gz"
+deviceinfo_kernel_disable_modules="true"
+
+# A/B with dynamic partitions (system in `super`). initrd appends the slot suffix itself.
+# Everything before systempart= is the stock PE cmdline minus buildvariant=userdebug and console.
+deviceinfo_kernel_cmdline="androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3 cgroup.memory=nokmem,nosocket loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048 systempart=/dev/mapper/system"
+
+deviceinfo_prebuilt_boot_ramdisk_source="https://github.com/halium/initramfs-tools-halium/releases/download/dynparts/initrd.img-touch-arm64"
+deviceinfo_ramdisk_compression="gzip"
+
+# Stock boot image geometry (PE boot.img). Header v2: dtb is inside boot.img.
+deviceinfo_bootimg_header_version="2"
+deviceinfo_flash_pagesize="4096"
+deviceinfo_flash_offset_base="0x00000000"
+deviceinfo_flash_offset_kernel="0x00008000"
+deviceinfo_flash_offset_ramdisk="0x01000000"
+deviceinfo_flash_offset_second="0x00000000"
+deviceinfo_flash_offset_tags="0x00000100"
+deviceinfo_flash_offset_dtb="0x01f00000"
+deviceinfo_bootimg_qcdt="false"
+deviceinfo_bootimg_os_version="13"
+deviceinfo_bootimg_os_patch_level="2024-01"
+# BOARD_BOOTIMAGE_PARTITION_SIZE = 100663296 (96 MiB), matches the fastboot partition-size of boot_a/boot_b.
+deviceinfo_bootimg_partition_size="100663296"
+deviceinfo_bootimg_has_init_boot_partition="false"
+# Stock DTB from the PE boot.img (9404950 bytes = dtb_size in the header). Place next to this file as
+# kebab-stock.dtb before building. Replace with the dtb built from the kernel tree once it boots.
+deviceinfo_bootimg_prebuilt_dtb="kebab-stock.dtb"
+
+# Separate dtbo partition (BOARD_KERNEL_SEPARATED_DTBO, 24 MiB). Use the stock one for first tests.
+deviceinfo_prebuilt_dtbo="dtbo.img"
+deviceinfo_dtbo="false"
+
+# Own 96 MiB recovery partition (BOARD_RECOVERYIMAGE_PARTITION_SIZE = 100663296).
+deviceinfo_has_recovery_partition="true"
+deviceinfo_recovery_partition_size="100663296"
+deviceinfo_use_unified_recovery="false"
+
+deviceinfo_rootfs_image_sector_size="4096"
+deviceinfo_system_partition_size="6000M"
