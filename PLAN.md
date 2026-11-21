@@ -220,7 +220,8 @@ Symptom: `bluebinder.service` in an endless auto-restart, `Error: 19 (No such de
 The Android `android.hardware.bluetooth@1.0-service-qti` was running and bluebinder logged `Connected to HIDL bluetooth service`, then failed
 opening `/dev/vhci` because `CONFIG_BT_HCIVHCI` was off (also RFCOMM/BNEP/HIDP off). Fix: those four `=y` in `device/halium.config`. Booted from RAM:
 `/dev/vhci` present, `Successfully initialized vhci bluetooth`, `hci0` up, `bluetoothctl power on` + `scan on` found 9 devices, BlueZ registered A2DP
-endpoints. Open: pairing, A2DP audio, controller address `22:22:8B:8F:7D:46` looks like a Qualcomm default (no NV address), flash to boot_a.
+endpoints. Flashed to boot_a (image sha256 0dbe1c36...) and re-verified after a normal boot: vhci, bluebinder active, hci0 powered. Wi-Fi stayed wlan0 and connected on that boot too.
+Open: pairing, A2DP audio, controller address `22:22:8B:8F:7D:46` looks like a Qualcomm default (no NV address).
 
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
