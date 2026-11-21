@@ -21,10 +21,14 @@ deviceinfo_kernel_source_branch="lineage-20"
 # lineage-24.0 uses "vendor/kona-perf_defconfig vendor/oplus.config", but lineage-20 (4.19.306) has no
 # oplus.config: verified 2026-11-20, only kona-perf_defconfig exists. halium.config goes last.
 # The 8T's own dts live in arch/arm64/boot/dts/vendor/19805 (project code), not under qcom/.
-deviceinfo_kernel_defconfig="vendor/kona-perf_defconfig halium.config"
+# lineage-20/21 device tree: TARGET_KERNEL_CONFIG := vendor/kona-perf_defconfig vendor/debugfs.config
+# and TARGET_KERNEL_ADDITIONAL_FLAGS := BRAND_SHOW_FLAG=oneplus (exported in ../build.sh).
+deviceinfo_kernel_defconfig="vendor/kona-perf_defconfig vendor/debugfs.config halium.config"
 deviceinfo_kernel_clang_compile="true"
 deviceinfo_kernel_llvm_compile="false"
-deviceinfo_kernel_image_name="Image.gz"
+# This kernel's default build target only produces arch/arm64/boot/Image (58 MB, uncompressed), same as the
+# stock PE boot.img kernel (52 MB uncompressed). There is no Image.gz target built by default.
+deviceinfo_kernel_image_name="Image"
 deviceinfo_kernel_disable_modules="true"
 
 # A/B with dynamic partitions (system in `super`). initrd appends the slot suffix itself.
@@ -57,9 +61,11 @@ deviceinfo_bootimg_prebuilt_dtb="kebab-stock.dtb"
 deviceinfo_prebuilt_dtbo="dtbo.img"
 deviceinfo_dtbo="false"
 
-# Own 96 MiB recovery partition (BOARD_RECOVERYIMAGE_PARTITION_SIZE = 100663296).
-deviceinfo_has_recovery_partition="true"
-deviceinfo_recovery_partition_size="100663296"
+# The phone has its own 96 MiB recovery partition (BOARD_RECOVERYIMAGE_PARTITION_SIZE = 100663296), but
+# there is no UBports recovery ramdisk for this device yet. Setting has_recovery_partition=true makes the
+# build tools run mkbootimg for recovery.img with an empty ramdisk and fail. Keep the LineageOS recovery
+# for now and re-enable this once a recovery ramdisk exists (phase 4 in PLAN.md).
+deviceinfo_has_recovery_partition="false"
 deviceinfo_use_unified_recovery="false"
 
 deviceinfo_rootfs_image_sector_size="4096"

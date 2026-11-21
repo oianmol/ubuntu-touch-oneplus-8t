@@ -21,14 +21,33 @@ Read from the phone / verified upstream, 2026-11-20. "(verify)" = not yet confir
   no modem remoteproc, no camera pipeline, no IMU/proximity sensors. That is a hardware floor, not
   the Halium result: Halium drives the Android vendor stack instead.
 
-## Current state of the phone (as of this plan)
-- Slot a: overwritten by earlier experiments (pmOS boot.img + empty dtbo, later LineageOS dtbo/vbmeta/recovery)
-- Slot b: unknown content, was hanging at the OnePlus logo. May hold earlier iOS-port payloads
-  (see `~/oneplus/work/payload/*.img`, `~/oneplus/mu-silicium/Mu-kebab.img`)
-- `copy-partitions` run once, so slot b firmware should now match slot a
-- LineageOS 24.0 install was in progress: recovery flashed, data formatted, zip to sideload
-- Pixel Experience Plus 13 (`~/oneplus/downloads/pe-rom`) is refused by the LOS 24 recovery
-  (SPL downgrade). It would only install from a recovery with an older SPL.
+## Current state of the phone (2026-11-21)
+- LineageOS 24.0 (nightly 2026-11-20) is installed and running from slot b. Bootloader unlocked.
+  Rooted debugging (adb root) is on in Developer options.
+- Slot a: boot_a holds a leftover pmOS boot.img, dtbo_a/vbmeta_a hold LineageOS images. Not used.
+- Full partition backup (81 partitions, hash-verified, 1.9 GB) is in `kebab-backup/` (gitignored: it
+  holds persist and modem data). Excludes super, userdata and log/dump partitions.
+- Pixel Experience Plus 13 is refused by the LOS 24 recovery (SPL downgrade).
+
+## Boot test log (all `fastboot boot`, nothing written to flash)
+- 2026-11-21: the Halium boot.img from the first build never became visible. Two diagnoses came later.
+- Hybrid test (our kernel + stock PE ramdisk) fell back to fastboot after ~7 s. Cause: kona-perf_defconfig
+  makes AppArmor the default LSM and the Android init needs SELinux. With `security=selinux` added to the
+  cmdline it behaves exactly like the stock kernel (USB `KB2001` appears at ~21 s vs 22 s stock). So the
+  kernel itself is good.
+- Halium ramdisk: no USB network appeared because (a) the kernel has no RNDIS/ECM/ACM configfs functions
+  (only NCM) and (b) macOS has no RNDIS driver anyway. Fixed for testing by patching the initramfs panic
+  handler to use an NCM gadget (`exp/make-halium-ncm.sh`). Result: USB device "Failed to boot" (Halium
+  initrd, 18d1:d001) at ~9 s, interface en13 at ~11 s, ping 192.168.2.15 OK at ~17 s, telnet shell works.
+- From the shell (log in `exp/halium-dmesg.txt`): kernel 4.19.306 up 24 s+ with no panic, UFS, SDE/DSI
+  display bound, touch and OPLUS charger drivers probe, dynamic partitions map (`system_b` found); the
+  initramfs then fails to find an Ubuntu Touch rootfs, as expected.
+- Findings fixed in `halium.config`: `SECURITY_APPARMOR_BOOTPARAM_VALUE=1` (defconfig had 0, so AppArmor
+  was off), USB_CONFIGFS_RNDIS/ECM/ACM. Findings not yet addressed: no `/dev/fb0` (FB=n, no fbdev
+  emulation), so the initramfs cannot draw on screen; `kasan_multi_shot` and other odd params arrive via
+  the bootloader cmdline.
+- Other build lessons: needs `CONFIG_CC_WERROR` off, `LLVM_IAS=1`, `BRAND_SHOW_FLAG=oneplus`, no
+  `deviceinfo_kernel_arch`, `deviceinfo_kernel_image_name="Image"`, recovery image disabled, overlay dir.
 
 ## Approach: Halium 13, vendor from stock OOS 13 (verify), downstream 4.19 kernel
 No official UBports sm8250 port found (searches 2026-11-20 found none for kebab, instantnoodle, or sm8250).
@@ -67,6 +86,24 @@ vendor (Android 16) is NOT usable with Halium 13.
    Bluetooth, GPS, sensors, camera, modem/telephony (last: the usual hard part, 8T has Qualcomm
    modem plus OnePlus RIL).
 4. UBports recovery, OTA channel, installer config.
+
+## Phase 2 plan: Ubuntu Touch rootfs into a free A/B slot (not started; first partition-modifying step)
+The initramfs mounts `/dev/mapper/system_<slot>` as the rootfs, so UT needs its own logical `system`
+partition. LineageOS lives in slot b, so use slot a and keep b bootable.
+1. Get the UT rootfs image for 24.04 arm64 (`24.04-2.x` channel in deviceinfo) plus
+   `build-tools/system-image-from-ota.sh`; build `system.img` sized `deviceinfo_system_partition_size`
+   (6000M) and the device tarball already produced (`out/device_kebab.tar.xz`).
+2. Check `super` free space (7.5 GB total, LineageOS uses most of it). Slot a's `system_a`, `vendor_a`,
+   `product_a`, `odm_a`, `system_ext_a` logical partitions exist but may be small or empty. Likely need a
+   fresh `super_empty.img` layout (LineageOS ships one) and to re-flash both slots' content, i.e. LineageOS
+   in b would be rewritten too. Decide before touching anything: either repartition `super` and reinstall
+   LineageOS afterwards from `kebab-lineage/dl`, or free space by shrinking LOS partitions.
+3. Flash via fastbootd (`fastboot reboot fastboot`): create/resize logical partitions, flash system.img,
+   flash the Android 13 vendor from `~/oneplus/work/pe-payload/out/vendor.img` (+ odm) into the matching
+   slot, then flash boot.img/dtbo to the same slot, `fastboot set_active a`. Confirm the first boot with
+   `fastboot boot` before writing boot_a.
+4. If it fails: boot LineageOS by `fastboot set_active b`; worst case reinstall from the verified zip
+   and restore partitions from `kebab-backup/`.
 
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by

@@ -47,6 +47,7 @@ docker run --rm \
       https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools build-tools
     mkdir -p work
     cp /port/deviceinfo /port/halium.config /port/kebab-stock.dtb /port/dtbo.img work/
+    rm -rf work/overlay && cp -r /port/overlay work/overlay
     cd work
     # The kernel merges "halium.config" as a %.config target, which only searches arch/arm64/configs/.
     K=/src/work/workdir/downloads/android_kernel_oneplus_sm8250
@@ -55,8 +56,13 @@ docker run --rm \
     # binutils (rejects newer clang output: "junk at end of line"). Use the integrated assembler instead.
     # (No apostrophes in comments here: this whole block is one single-quoted bash -c string.)
     export LLVM_IAS=1
+    # LineageOS builds this kernel with BRAND_SHOW_FLAG=oneplus (TARGET_KERNEL_ADDITIONAL_FLAGS). It selects the
+    # OnePlus charger (op_wlchg) and haptics code paths and -DOPLUS_CUSTOM_OP_DEF; the generic build differs.
+    export BRAND_SHOW_FLAG=oneplus
     ../build-tools/build.sh "$@"
-    cp -v out/*.img /out/ 2>/dev/null || true
+    # build-tools leaves the partition images in workdir/tmp/partitions and the tarball in out/
+    cp -v workdir/tmp/partitions/*.img /out/
+    cp -v out/device_kebab.tar.xz out/Module.symvers /out/ 2>/dev/null || true
   ' _ "$@"
 
 echo "Images in ./out/ (if any) — nothing has been flashed."
