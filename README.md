@@ -165,6 +165,6 @@ vendor stack). Please include `journalctl -b` or `dmesg` captured right after bo
 
 ## License
 
-MIT, see `LICENSE`. The exception is `device/patches/`: those files modify the Linux kernel and stay
+MIT, see `LICENSE`. The exception is `device/patches/` (see the README there): those files modify the Linux kernel and stay
 **GPL-2.0-only**. The Android vendor/odm blobs, the UBports rootfs and the Halium GSI are not part of this repo and keep
 their own licenses.
