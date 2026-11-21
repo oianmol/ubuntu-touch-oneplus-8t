@@ -23,7 +23,7 @@ RELEASE = ROOT / "listing/devices.ubuntu-touch.io/data/devices/kebab/releases/no
 MATRIX = [
     ("Actors", [
         ("manualBrightness", "Manual brightness", "?"),
-        ("notificationLed", "Notification LED", "?"),
+        ("notificationLed", "Notification LED", "+"),
         ("torchlight", "Torchlight", "+"),
         ("vibration", "Vibration", "+"),
     ]),
@@ -77,11 +77,11 @@ MATRIX = [
         ("wifi", "WiFi", "+"),
     ]),
     ("Sensors", [
-        ("autoBrightness", "Automatic brightness", "?"),
+        ("autoBrightness", "Automatic brightness", "+"),
         ("fingerprint", "Fingerprint reader", "?"),
         ("gps", "GPS", "?"),
-        ("proximity", "Proximity", "?"),
-        ("rotation", "Rotation", "?"),
+        ("proximity", "Proximity", "+"),
+        ("rotation", "Rotation", "+"),
         ("touchscreen", "Touchscreen", "+"),
     ]),
     ("Sound", [
