@@ -22,7 +22,7 @@ RELEASE = ROOT / "listing/devices.ubuntu-touch.io/data/devices/kebab/releases/no
 # (category, [(id, label, status)])  Order and ids follow the devices site release template.
 MATRIX = [
     ("Actors", [
-        ("manualBrightness", "Manual brightness", "?"),
+        ("manualBrightness", "Manual brightness", "+"),
         ("notificationLed", "Notification LED", "+"),
         ("torchlight", "Torchlight", "+"),
         ("vibration", "Vibration", "+"),
@@ -34,17 +34,17 @@ MATRIX = [
         ("switchCamera", "Switching between cameras", "?"),
     ]),
     ("Cellular", [
-        ("carrierInfo", "Carrier info, signal strength", "?"),
-        ("dataConnection", "Data connection", "?"),
-        ("dualSim", "Dual SIM functionality", "?"),
-        ("calls", "Incoming, outgoing calls", "?"),
-        ("volte", "LTE calling (VoLTE)", "?"),
-        ("mms", "MMS in, out", "?"),
-        ("pinUnlock", "PIN unlock", "?"),
-        ("sms", "SMS in, out", "?"),
-        ("audioRoutings", "Change audio routings", "?"),
-        ("voiceCall", "Voice in calls", "?"),
-        ("volumeControl", "Volume control in calls", "?"),
+        ("carrierInfo", "Carrier info, signal strength", "-"),
+        ("dataConnection", "Data connection", "-"),
+        ("dualSim", "Dual SIM functionality", "-"),
+        ("calls", "Incoming, outgoing calls", "-"),
+        ("volte", "LTE calling (VoLTE)", "-"),
+        ("mms", "MMS in, out", "-"),
+        ("pinUnlock", "PIN unlock", "-"),
+        ("sms", "SMS in, out", "-"),
+        ("audioRoutings", "Change audio routings", "-"),
+        ("voiceCall", "Voice in calls", "-"),
+        ("volumeControl", "Volume control in calls", "-"),
     ]),
     ("Endurance", [
         ("batteryLifetimeTest", "24+ hours battery lifetime", "?"),
@@ -57,7 +57,7 @@ MATRIX = [
     ("Misc", [
         ("waydroid", "Waydroid", "?"),
         ("apparmorPatches", "AppArmor patches", "+-"),
-        ("batteryPercentage", "Battery percentage", "?"),
+        ("batteryPercentage", "Battery percentage", "+"),
         ("offlineCharging", "Offline charging", "?"),
         ("onlineCharging", "Online charging", "?"),
         ("recoveryImage", "Recovery image", "-"),
@@ -87,8 +87,8 @@ MATRIX = [
     ("Sound", [
         ("earphones", "Earphones", "?"),
         ("loudspeaker", "Loudspeaker", "+"),
-        ("microphone", "Microphone", "?"),
-        ("volumeControl", "Volume control", "?"),
+        ("microphone", "Microphone", "+"),
+        ("volumeControl", "Volume control", "+"),
     ]),
     ("USB", [
         ("mtp", "MTP access", "?"),
