@@ -1,0 +1,8 @@
+# OnePlus 8T (kebab): the Qualcomm/OPLUS touch driver registers ABS_MT_WIDTH_MAJOR and ABS_MT_PRESSURE with an empty
+# range (min == max == 0). libinput treats that as a kernel bug and ignores the whole touchscreen
+# ("libinput error: event1 - touchpanel: kernel bug: device has min == max on ABS_MT_WIDTH_MAJOR"),
+# so Mir and Lomiri get no touch events.
+# (MatchUdevType has no "touchscreen" value; an unknown value makes libinput reject the whole file, so match by name.) Disable the two broken axes; X/Y/slot/tracking-id/touch-major are fine.
+[OnePlus 8T touchscreen]
+MatchName=touchpanel
+AttrEventCode=-ABS_MT_WIDTH_MAJOR;-ABS_MT_PRESSURE;

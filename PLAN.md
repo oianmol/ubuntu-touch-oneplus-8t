@@ -158,6 +158,18 @@ the session script then picks the unencrypted target).
 Still open: policykit-agent aborted via std::terminate before this fix (recheck), apparmor.service,
 audiosystem-passthrough-qti.service, Wi-Fi/audio/camera/modem rules (the vayu rules file has the full Qualcomm list).
 
+### Touch and display cutout (2026-11-21)
+- Touch was dead because libinput rejected the touchscreen: "event1 - touchpanel: kernel bug: device has min == max
+  on ABS_MT_WIDTH_MAJOR" (the OPLUS/Qualcomm driver reports ABS_MT_WIDTH_MAJOR and ABS_MT_PRESSURE with 0..0 range),
+  so Mir never added /dev/input/event1. Fix: `etc/libinput/local-overrides.quirks` with `MatchName=touchpanel` and
+  `AttrEventCode=-ABS_MT_WIDTH_MAJOR;-ABS_MT_PRESSURE;`. Gotchas: `MatchUdevType=touchscreen` is NOT a valid value
+  and makes libinput drop the whole quirk file ("Failed to load the device quirks"). Verified: touch works.
+- Display: panel 1080x2400 @ ~402 ppi, GRID_UNIT_PX 21 (same as spacewar/vayu). The punch-hole camera covered the status
+  bar. Added `etc/deviceinfo/devices/kebab.yaml` (Names, GridUnit 21, CollapsedPanelHeight 123, DisplayCutoutsCollapsed
+  "0 0 164 123" and "1055 0 25 123") with numbers from LineageOS android_device_oneplus_kebab overlay
+  (cutout circle 68 px, centre 99 px from left / 68.5 px from top, status bar 123 px). To tune, edit that file.
+- Tools used: python3-evdev (installed on UT) to read /dev/input/event*, dmesg [TP] lines, journal of the lomiri service.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (verified hashes in `../kebab-lineage/dl`) from recovery.
