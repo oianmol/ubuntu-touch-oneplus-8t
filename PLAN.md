@@ -205,6 +205,16 @@ Debugging aid: the kernel log buffer wraps in minutes ([TP] touch spam), so capt
 - Still open here: `audiosystem-passthrough-qti.service` fails at boot (startup race, runs fine by hand; only needed for
   call audio), vendor lacks `libsndcardparser`/`libacdbloader`/`libhdmipassthru` (HAL logs a warning and carries on).
 
+### Sensors (2026-11-21): mostly working out of the box
+Android side: vendor `android.hardware.sensors@2.0-service.multihal`, `sscrpcd sensorspd`, `sensors.qti`, `sensorscalibrate` run in the
+container; SLPI/ADSP/CDSP subsystems ONLINE; /mnt/vendor/persist mounted with `sensors/registry`. Host side: `sensorfwd` with the
+`30-hidl.conf` plugin set (same adaptors as the q2q port). A QtSensors QML probe (`qmlscene` offscreen, QtSensors 5.12) got live data
+from Accelerometer, Gyroscope, LightSensor (126 lux), OrientationSensor (5 = FaceUp) and ProximitySensor (near=false). Magnetometer
+delivers 0,0,0 at ~50 Hz. `test_sensors` (libhybris) segfaults, so it is useless here.
+Noise: `sensorfwd` logs `HYBRIS CTL invalid sensor type: 3` / `orientationadaptor can not be started` (HAL 2.0 has no orientation
+sensor type); QtSensors' generic plugin still derives orientation from the accelerometer. Open: magnetometer zeros, proximity under
+cover, whether Lomiri auto-rotation follows.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.

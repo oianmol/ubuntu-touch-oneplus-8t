@@ -28,7 +28,10 @@ Tested on one KB2001 (Indian variant), 2026-11-21. "Verified" means checked on t
 | USB rescue network (NCM) | Verified |
 | Wi-Fi (QCA6390 via CNSS + qcacld) | Verified, connects and has internet; interface name pinned to `wlan0` so saved networks survive reboots |
 | Audio output (speaker) | Works at the HAL level: `paplay` is audible. **Notification sounds and ringtone previews fail**: `media-hub-server` aborts, see Lessons. Kernel patch `0002` fixes it: with it, booted from RAM, Settings sound previews play (confirmed by ear; not yet flashed to `boot_a`, log-level checks pending) |
-| Bluetooth, sensors, camera, modem/calls/SMS, fingerprint, haptics, flashlight | Not tested |
+| Sensors: accelerometer, gyroscope, ambient light, orientation | Verified through QtSensors/sensorfw: readings arrive (accelerometer ~9.8 on Z flat, light ~126 lux, orientation face-up). Nothing to fix in the port |
+| Sensors: magnetometer (compass) | Broken: reports 0, 0, 0 continuously (MMC5603NJ, HAL config present, persist registry mounted). Not yet diagnosed |
+| Sensors: proximity | One reading (`near=false`); cover test and call-time behaviour not checked |
+| Bluetooth, camera, modem/calls/SMS, fingerprint, haptics, flashlight | Not tested |
 | `apparmor.service` | Fixed with a drop-in (see Lessons): the service now runs its reload and succeeds. Loaded-profile count not yet checked with `aa-status` |
 | Proper `boot.img` with AVB footer, UBports recovery, OTA channel | Not done. Currently flashed with a debug boot image |
 
