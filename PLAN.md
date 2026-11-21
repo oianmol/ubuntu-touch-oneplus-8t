@@ -170,6 +170,16 @@ audiosystem-passthrough-qti.service, Wi-Fi/audio/camera/modem rules (the vayu ru
   (cutout circle 68 px, centre 99 px from left / 68.5 px from top, status bar 123 px). To tune, edit that file.
 - Tools used: python3-evdev (installed on UT) to read /dev/input/event*, dmesg [TP] lines, journal of the lomiri service.
 
+### Wi-Fi (2026-11-21): works
+Hardware: QCA6390-family chip on PCIe (17cb:1101) driven by the in-kernel CNSS2 + qcacld-3.0 (`wlan`, built in). CNSS loads
+`qca6390/amss20.bin` through the container's ueventd and the chip reaches MHI MISSION_MODE at ~14.7 s. What was missing: the host
+driver only creates the interface after userspace writes ON to /dev/wlan (on Android the Wi-Fi HAL does this). Fix:
+`usr/libexec/lxc-android-config/device-hacks` (device/overlay) waits (bounded) for the property service, `init.svc.vendor.wifi_hal_legacy`
+and /dev/wlan, then `echo ON > /dev/wlan`; same as nothing-spacewar and samsung-q2q. The interface shows up as wlan0 (wlp1s0 in
+one run, udev renaming varies), NetworkManager manages it, scanning and connecting from the Lomiri UI work, internet verified.
+Harmless noise: Android init's `modprobe qca_cld3_qca6390` fails because the driver is built in, not a module.
+Debugging aid: the kernel log buffer wraps in minutes ([TP] touch spam), so capture `dmesg > /tmp/early.log` right after boot.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (verified hashes in `../kebab-lineage/dl`) from recovery.

@@ -1,0 +1,17 @@
+#!/bin/sh
+# OnePlus 8T (kebab) device hacks, run by device-hacks.service after the Android container starts.
+
+# Wi-Fi: the qcacld-3.0 driver is built into the kernel and the CNSS driver boots the chip firmware, but the
+# host driver only creates the interface when userspace writes ON to /dev/wlan. On Android the Wi-Fi HAL does
+# that; on Ubuntu Touch nothing does, so do it here (same as the nothing-spacewar and samsung-q2q ports).
+# udev then renames the interface to wlp1s0, which NetworkManager manages like any other Wi-Fi device.
+# Bounded waits so a missing HAL can never hang the boot.
+n=0
+while [ ! -e /dev/socket/property_service ] && [ $n -lt 300 ]; do sleep 0.2; n=$((n+1)); done
+n=0
+while [ "$(getprop init.svc.vendor.wifi_hal_legacy)" != "running" ] && [ $n -lt 120 ]; do sleep 0.5; n=$((n+1)); done
+n=0
+while [ ! -e /dev/wlan ] && [ $n -lt 150 ]; do sleep 0.2; n=$((n+1)); done
+[ -e /dev/wlan ] && echo ON > /dev/wlan
+
+exit 0
