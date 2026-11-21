@@ -163,4 +163,8 @@ Find them under `gitlab.com/ubports/porting/community-ports`.
 Issues and PRs welcome, especially from other SM8250 owners (OnePlus 8 / 8 Pro / 9 share this SoC and much of the
 vendor stack). Please include `journalctl -b` or `dmesg` captured right after boot.
 
-No license has been chosen yet; until one is added, reuse needs the author's permission.
+## License
+
+MIT, see `LICENSE`. The exception is `device/patches/`: those files modify the Linux kernel and stay
+**GPL-2.0-only**. The Android vendor/odm blobs, the UBports rootfs and the Halium GSI are not part of this repo and keep
+their own licenses.
