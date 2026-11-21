@@ -215,6 +215,13 @@ Noise: `sensorfwd` logs `HYBRIS CTL invalid sensor type: 3` / `orientationadapto
 sensor type); QtSensors' generic plugin still derives orientation from the accelerometer. Open: magnetometer zeros, proximity under
 cover, whether Lomiri auto-rotation follows.
 
+### Bluetooth (2026-11-21): fixed with kernel options
+Symptom: `bluebinder.service` in an endless auto-restart, `Error: 19 (No such device)`, no `hci0`, `bluetoothd` running with no controller.
+The Android `android.hardware.bluetooth@1.0-service-qti` was running and bluebinder logged `Connected to HIDL bluetooth service`, then failed
+opening `/dev/vhci` because `CONFIG_BT_HCIVHCI` was off (also RFCOMM/BNEP/HIDP off). Fix: those four `=y` in `device/halium.config`. Booted from RAM:
+`/dev/vhci` present, `Successfully initialized vhci bluetooth`, `hci0` up, `bluetoothctl power on` + `scan on` found 9 devices, BlueZ registered A2DP
+endpoints. Open: pairing, A2DP audio, controller address `22:22:8B:8F:7D:46` looks like a Qualcomm default (no NV address), flash to boot_a.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.

@@ -31,7 +31,8 @@ Tested on one KB2001 (Indian variant), 2026-11-21. "Verified" means checked on t
 | Sensors: accelerometer, gyroscope, ambient light, orientation | Verified through QtSensors/sensorfw: readings arrive (accelerometer ~9.8 on Z flat, light ~126 lux, orientation face-up). Nothing to fix in the port |
 | Sensors: magnetometer (compass) | Broken: reports 0, 0, 0 continuously (MMC5603NJ, HAL config present, persist registry mounted). Not yet diagnosed |
 | Sensors: proximity | One reading (`near=false`); cover test and call-time behaviour not checked |
-| Bluetooth, camera, modem/calls/SMS, fingerprint, haptics, flashlight | Not tested |
+| Bluetooth | Works with a rebuilt kernel (`CONFIG_BT_HCIVHCI` etc., see Lessons): `hci0` appears, adapter powers on and scans. Booted from RAM; pairing, A2DP audio and the placeholder-looking controller address (`22:22:...`) not yet checked |
+| Camera, modem/calls/SMS, fingerprint, haptics, flashlight | Not tested |
 | `apparmor.service` | Fixed with a drop-in (see Lessons): the service now runs its reload and succeeds. Loaded-profile count not yet checked with `aa-status` |
 | Proper `boot.img` with AVB footer, UBports recovery, OTA channel | Not done. Currently flashed with a debug boot image |
 
@@ -150,6 +151,11 @@ the persistent journal.
     files) are bound to the interface name, so after a rename NetworkManager ignores them and asks again. Pin the name
     with `etc/systemd/network/10-kebab-wlan.link` (`OriginalName=wlan0`, `NamePolicy=`, `Name=wlan0`). One clean boot
     verified; a second reboot is still to be checked.
+12. **No Bluetooth: `bluebinder` restarted forever with "No such device".** `bluebinder` bridges the Android HIDL
+    Bluetooth HAL (which was fine, `Connected to HIDL bluetooth service`) to BlueZ through a virtual HCI controller, and
+    the kernel had no `CONFIG_BT_HCIVHCI`, so `/dev/vhci` did not exist and there was no `hci0`. `halium.config` now sets
+    `BT_HCIVHCI`, `BT_RFCOMM`, `BT_BNEP`, `BT_HIDP`. After the rebuild `bluebinder` reports `Successfully initialized vhci
+    bluetooth` and a scan finds nearby devices.
 
 Other gotchas: never press the power key while testing (logind powers off); the kernel log buffer wraps in minutes on
 this phone because of touch-driver spam, so capture `dmesg` right after boot; the stock A/B retry counter can send you
