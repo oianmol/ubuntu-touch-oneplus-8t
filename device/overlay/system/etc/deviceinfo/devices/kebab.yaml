@@ -21,6 +21,13 @@ KEBAB:
     - Landscape
     - InvertedLandscape
 
+  # Torch: the dual-LED flash is exposed as led:torch_*/led:switch_*; Lomiri toggles the first pair
+  # (the files are made writable for the session user in usr/libexec/lxc-android-config/device-hacks).
+  FlashlightSysfsPath:
+    - /sys/class/leds/led:torch_0/brightness
+  FlashlightSwitchPath:
+    - /sys/class/leds/led:switch_0/brightness
+
   CollapsedPanelHeight: 123
   DisplayCutoutsCollapsed:
   - 0 0 164 123

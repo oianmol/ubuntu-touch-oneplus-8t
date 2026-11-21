@@ -24,8 +24,8 @@ MATRIX = [
     ("Actors", [
         ("manualBrightness", "Manual brightness", "?"),
         ("notificationLed", "Notification LED", "?"),
-        ("torchlight", "Torchlight", "?"),
-        ("vibration", "Vibration", "?"),
+        ("torchlight", "Torchlight", "+"),
+        ("vibration", "Vibration", "+"),
     ]),
     ("Camera", [
         ("flashlight", "Flashlight", "?"),

@@ -10,9 +10,9 @@ portStatus:
       - id: "notificationLed"
         value: "?"
       - id: "torchlight"
-        value: "?"
+        value: "+"
       - id: "vibration"
-        value: "?"
+        value: "+"
   - categoryName: "Camera"
     features:
       - id: "flashlight"

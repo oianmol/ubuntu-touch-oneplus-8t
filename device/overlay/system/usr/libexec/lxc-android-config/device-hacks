@@ -1,6 +1,11 @@
 #!/bin/sh
 # OnePlus 8T (kebab) device hacks, run by device-hacks.service after the Android container starts.
 
+# Flashlight: Lomiri writes the torch LED sysfs files as the session user, but they are root-only after boot.
+for led in led:torch_0 led:switch_0 led:torch_1 led:switch_1; do
+    [ -e /sys/class/leds/$led/brightness ] && chmod 666 /sys/class/leds/$led/brightness
+done
+
 # Wi-Fi: the qcacld-3.0 driver is built into the kernel and the CNSS driver boots the chip firmware, but the
 # host driver only creates the interface when userspace writes ON to /dev/wlan. On Android the Wi-Fi HAL does
 # that; on Ubuntu Touch nothing does, so do it here (same as the nothing-spacewar and samsung-q2q ports).
