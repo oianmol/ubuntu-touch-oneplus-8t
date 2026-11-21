@@ -1,7 +1,7 @@
 # Ubuntu Touch port — OnePlus 8T (KB2001, `kebab`)
 
 Purpose: a rollback-safe testbed for the Halium flow, and a usable Ubuntu Touch phone if it works out.
-The Fold 5 port (`../q5q-port/`) is blocked on bootloader unlock; this device is not.
+This started as a stand-in for a Galaxy Z Fold 5 port that is blocked on bootloader unlock; this device is not.
 
 ## Device facts
 Read from the phone / verified upstream, 2026-11-20. "(verify)" = not yet confirmed on this phone.
@@ -180,9 +180,30 @@ one run, udev renaming varies), NetworkManager manages it, scanning and connecti
 Harmless noise: Android init's `modprobe qca_cld3_qca6390` fails because the driver is built in, not a module.
 Debugging aid: the kernel log buffer wraps in minutes ([TP] touch spam), so capture `dmesg > /tmp/early.log` right after boot.
 
+### Audio and AppArmor (2026-11-21)
+- Kernel sound card `kona-mtp-snd-card` is up; PulseAudio has `sink.primary_output` (droid HAL, speaker port). `paplay` is
+  audible and shows a RUNNING speaker PCM. Notification sounds, ringtone previews (anything via media-hub) are silent.
+- `media-hub-server` aborts with `apparmor::Context cannot be created for empty name` as soon as a client opens a session.
+- Step 1: `apparmor.service` failed on every boot because its `ExecStartPre` (`wipe-aa-cache-on-channel-switch.py`) returns 1
+  on non-system-image installs. Fix: `etc/systemd/system/apparmor.service.d/zz-kebab-nonfatal-cache-wipe.conf` (reset + `-`
+  prefix). The `zz-` name is required (drop-ins merge by filename; `lxc-android-config.conf` sorts later than `90-`).
+  After the fix the unit runs its reload and succeeds. media-hub still aborted.
+- Step 2 (root cause): the session D-Bus daemon (built with libapparmor) answers `AppArmorSecurityContextUnknown` for every
+  connection and `GetConnectionCredentials` has no `LinuxSecurityLabel`. `SO_PEERSEC` on any AF_UNIX socket returns
+  ENOPROTOOPT (python `getsockopt(SOL_SOCKET, 31)` on a socketpair). In this kernel `apparmor_socket_getpeersec_stream`
+  reads `sk_ctx->peer`, which nothing sets for AF_UNIX (no `unix_stream_connect` LSM hook; mainline AppArmor got AF_UNIX
+  mediation in 6.7, Ubuntu kernels carry it as SAUCE). Config is fine (`SECURITY_NETWORK=y`).
+- Fix: `device/patches/0002-apparmor-set-peer-label-on-unix-stream-connect.patch` registers `unix_stream_connect` and sets
+  each side's `peer` from the other side's label (only if unset, no label put under the unix state lock). Patch applies
+  cleanly; **kernel rebuilt but NOT yet verified on the phone**.
+- Method notes: `adb shell` is `phablet` (not root) and `sudo` needs the account password once the lock-screen PIN exists,
+  so an empty-password sudo that worked over USB SSH stops working. Read-only checks need no root: `/proc`, `pactl`, `journalctl`.
+- Still open here: `audiosystem-passthrough-qti.service` fails at boot (startup race, runs fine by hand; only needed for
+  call audio), vendor lacks `libsndcardparser`/`libacdbloader`/`libhdmipassthru` (HAL logs a warning and carries on).
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
-flashing a LineageOS 24 install (verified hashes in `../kebab-lineage/dl`) from recovery.
+flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.
 Stock OOS restore is the open item: no official image source found (OnePlus pages and XDA both
 block automated fetches). Get a KB2001 full OTA zip before any phase that rewrites firmware partitions.
 

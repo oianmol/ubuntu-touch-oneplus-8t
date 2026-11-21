@@ -1,0 +1,20 @@
+# Build outputs and large or sensitive artefacts (images, firmware, device logs, backups)
+out/
+device/*.dtb
+device/dtbo.img
+*.log
+kebab-backup/
+ref-ports/
+exp/*.bin
+exp/*.img
+exp/debs/
+exp/halium-dmesg.txt
+exp/our-config.txt
+exp/abl-log-tail.txt
+exp/ut-journal-*.txt
+exp/vendor-usb-rc-*.txt
+ut/*.img
+ut/*.tar.xz
+ut/*.asc
+ut/rootfs-*
+!exp/vbmeta-disabled.img

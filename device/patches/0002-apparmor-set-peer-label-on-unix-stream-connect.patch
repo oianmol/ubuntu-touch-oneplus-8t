@@ -1,0 +1,50 @@
+diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
+index 898752b81..cf070436e 100644
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -1096,6 +1096,37 @@ static int apparmor_socket_getpeersec_stream(struct socket *sock,
+ 	return error;
+ }
+ 
++/**
++ * apparmor_unix_stream_connect - record the peer labels of a unix stream connection
++ * @sock: client socket
++ * @other: listening socket being connected to
++ * @newsk: new server side socket created for this connection
++ *
++ * Without this sk_peer_label() never has a peer for AF_UNIX, so SO_PEERSEC fails with ENOPROTOOPT and
++ * userspace (the D-Bus daemon: GetConnectionAppArmorSecurityContext, LinuxSecurityLabel) cannot learn
++ * the confinement of its clients. Called with the unix state locks held, so only take label references
++ * and never overwrite an existing peer (a label put here could sleep).
++ */
++static int apparmor_unix_stream_connect(struct sock *sock, struct sock *other,
++					struct sock *newsk)
++{
++	struct aa_sk_ctx *ctx = SK_CTX(sock);
++	struct aa_sk_ctx *other_ctx = SK_CTX(other);
++	struct aa_sk_ctx *new_ctx = SK_CTX(newsk);
++
++	if (!ctx || !other_ctx || !new_ctx)
++		return 0;
++
++	/* the client sees the listener as its peer */
++	if (!ctx->peer)
++		ctx->peer = aa_get_label(other_ctx->label);
++	/* the server side socket sees the client as its peer */
++	if (!new_ctx->peer)
++		new_ctx->peer = aa_get_label(ctx->label);
++
++	return 0;
++}
++
+ /**
+  * apparmor_socket_getpeersec_dgram - get security label of packet
+  * @sock: the peer socket
+@@ -1188,6 +1219,7 @@ static struct security_hook_list apparmor_hooks[] __lsm_ro_after_init = {
+ 	LSM_HOOK_INIT(socket_getpeersec_dgram,
+ 		      apparmor_socket_getpeersec_dgram),
+ 	LSM_HOOK_INIT(sock_graft, apparmor_sock_graft),
++	LSM_HOOK_INIT(unix_stream_connect, apparmor_unix_stream_connect),
+ 
+ 	LSM_HOOK_INIT(cred_alloc_blank, apparmor_cred_alloc_blank),
+ 	LSM_HOOK_INIT(cred_free, apparmor_cred_free),
