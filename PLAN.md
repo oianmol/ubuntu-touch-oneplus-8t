@@ -195,7 +195,8 @@ Debugging aid: the kernel log buffer wraps in minutes ([TP] touch spam), so capt
   mediation in 6.7, Ubuntu kernels carry it as SAUCE). Config is fine (`SECURITY_NETWORK=y`).
 - Fix: `device/patches/0002-apparmor-set-peer-label-on-unix-stream-connect.patch` registers `unix_stream_connect` and sets
   each side's `peer` from the other side's label (only if unset, no label put under the unix state lock). Patch applies
-  cleanly; **kernel rebuilt but NOT yet verified on the phone**.
+  cleanly. Kernel rebuilt and booted from RAM (`fastboot boot exp/halium-ncm.img`, boot_a untouched): ringtone/message-sound previews in
+  Settings now play (confirmed by ear). Log-level checks (SO_PEERSEC, media-hub aborts = 0) still to do; not flashed to boot_a yet.
 - Method notes: `adb shell` is `phablet` (not root) and `sudo` needs the account password once the lock-screen PIN exists,
   so an empty-password sudo that worked over USB SSH stops working. Read-only checks need no root: `/proc`, `pactl`, `journalctl`.
 - Still open here: `audiosystem-passthrough-qti.service` fails at boot (startup race, runs fine by hand; only needed for
