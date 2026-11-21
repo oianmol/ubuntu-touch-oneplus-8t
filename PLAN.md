@@ -105,6 +105,44 @@ partition. LineageOS lives in slot b, so use slot a and keep b bootable.
 4. If it fails: boot LineageOS by `fastboot set_active b`; worst case reinstall from the verified zip
    and restore partitions from `kebab-backup/`.
 
+## Bring-up findings (2026-11-21, continued)
+- Flash boots of slot a were NOT silent crashes: the persistent journal (userdata `system-data/var/log/journal`,
+  readable from the initramfs debug shell via chroot journalctl) shows Ubuntu Touch running for minutes until the
+  power key was pressed. USB and display were the problems.
+- Vendor image must be ext4: the OxygenOS/PE vendor is EROFS with an incompat feature the 4.19 driver rejects
+  ("unidentified incompatible feature 2"). Converted vendor (1000 MiB) and odm (450 MiB) to ext4, system_a 4600 MiB.
+- Android's vendor `init.qcom.usb.rc` binds USB gadget g1 (also in charger mode) so usb-moded fails with EBUSY.
+  Fixed with an empty override via /usr/share/halium-overlay (device/overlay). usb-moded then gives
+  `ssh -p 8022 phablet@10.15.19.82` (empty password, `sudo` works with empty password) ~27 s after boot,
+  with `RNDIS_FUNCTION=ncm.usb0` so a Mac gets an interface.
+- Display: lightdm exits right after starting the compositor with `waitid(pid:N, pidfd=M) failed: EINVAL`:
+  GLib 2.80 uses waitid(P_PIDFD) which 4.19 lacks. Patch `device/patches/0001-wait-introduce-waitid-P_PIDFD.patch`
+  (backport of the 5.4 feature). Not yet verified on the phone.
+- Mir log also shows `eglSubDriverAndroid.so` / `libadreno_app_profiles.so` not found (files exist in
+  /android/vendor/lib64/egl): probably a libhybris search path issue, to check if the screen stays blank.
+- Tips: never press the power key while testing (logind powers off). A/B retry counters: re-run `fastboot set_active a`.
+
+## STATUS 2026-11-21: Ubuntu Touch boots to the Lomiri session on the 8T
+Slot a: Ubuntu Touch 24.04.5 (24.04-2.x daily rootfs + Halium 13 GSI), our 4.19.306 kernel, PE Android 13 vendor/odm converted to ext4.
+Mir renders on the Adreno 650 (GL ES 3.2), boot spinner on screen, Lomiri user services running.
+Fixes that got here (all in git): halium.config (apparmor bootparam, USB gadget functions), waitid(P_PIDFD) kernel
+backport, overlay: empty init.qcom.usb.rc (stops Android binding the gadget), vndservicemanager.rc with
+LD_PRELOAD libselinux_stubs.so, ext4 vendor/odm, usb-moded NCM pin. Normal power-on (power key, no cable) is
+needed for normal mode: a cable at power-on makes the bootloader pass androidboot.mode=charger and UT boots
+charger.target (battery logo, no display manager). `sudo reboot bootloader` from UT reaches fastboot without keys.
+
+### What the similar UBports ports showed (checked 2026-11-21, gitlab.com/ubports/porting/community-ports)
+- google-sargo (Pixel 3a, kernel 4.9, Halium 12): overlay `android/vendor/etc/init/vndservicemanager.rc` with
+  `setenv LD_PRELOAD libselinux_stubs.so` (our fix is the same; the GSI ships libselinux_stubs.so). It also
+  overlays vendor rc files for keymaster, fingerprint, sensors, gnss, media omx, and uses `.halium-overlay-dir` markers.
+- sony-pdx225 (Xperia 10 IV, 5.4): bind-mounts its own vndservicemanager binary instead.
+- nothing-spacewar (4.x/5.4, Halium 11) and xiaomi-vayu (4.14): cmdlines include `console=tty0`; usb-tethering and
+  umtprd-functionfs overlays; none of the checked kernels (4.9, 4.14, Pixel 5 4.19.269) carries waitid(P_PIDFD),
+  because they also lack pidfd_open so GLib falls back. Ours had pidfd_open without it, hence the backport.
+- Reference clones live in `kebab-port/ref-ports/` (gitignored).
+Next to do: touch/keyboard check, Wi-Fi, audio, Bluetooth, sensors, camera, modem (ofono/ril), apparmor.service,
+fingerprint, proper boot.img with AVB footer, UBports recovery, remove the empty-password debug access.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (verified hashes in `../kebab-lineage/dl`) from recovery.

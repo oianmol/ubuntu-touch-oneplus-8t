@@ -1,9 +1,10 @@
 #!/bin/bash
 # Build exp/halium-ncm.img: our kernel + Halium initramfs patched so its debug network uses a USB NCM gadget
+# SYSTEMPART=/dev/mapper/x OUTNAME=halium-debug.img ./exp/make-halium-ncm.sh  -> forces the initramfs debug shell
 # (macOS has no RNDIS driver; this kernel has NCM built in). For fastboot boot only; never flash it.
 set -e
 cd "$(dirname "$0")/.."
-docker run --rm -v kebab_kernel_src:/src -v "$PWD/exp":/exp -v "$PWD/device":/dev1:ro kebab-halium-build bash -c '
+docker run --rm -e SYSTEMPART="${SYSTEMPART:-/dev/mapper/system}" -e OUTNAME="${OUTNAME:-halium-ncm.img}" -v kebab_kernel_src:/src -v "$PWD/exp":/exp -v "$PWD/device":/dev1:ro kebab-halium-build bash -c '
 set -e
 D=/src/work/workdir/downloads
 rm -rf /tmp/rd && mkdir /tmp/rd && cd /tmp/rd
@@ -26,6 +27,6 @@ python3 $D/android_system_tools_mkbootimg/mkbootimg.py --kernel $K --ramdisk /ex
  --dtb /dev1/kebab-stock.dtb --dtb_offset 0x01f00000 --base 0x00000000 --kernel_offset 0x00008000 \
  --ramdisk_offset 0x01000000 --second_offset 0x00000000 --tags_offset 0x00000100 --pagesize 4096 --header_version 2 \
  --os_version 13.0.0 --os_patch_level 2024-01 \
- --cmdline "androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3 cgroup.memory=nokmem,nosocket loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048 systempart=/dev/mapper/system" \
- -o /exp/halium-ncm.img'
-ls -la exp/halium-ncm.img
+ --cmdline "androidboot.hardware=qcom androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3 cgroup.memory=nokmem,nosocket loop.max_part=7 lpm_levels.sleep_disabled=1 msm_rtb.filter=0x237 reboot=panic_warm service_locator.enable=1 swiotlb=2048 systempart=$SYSTEMPART" \
+ -o /exp/$OUTNAME'
+ls -la exp/${OUTNAME:-halium-ncm.img}

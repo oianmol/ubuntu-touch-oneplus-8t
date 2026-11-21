@@ -1,0 +1,14 @@
+# OnePlus 8T (kebab): the vendor vndservicemanager aborts with CHECK(selinux_status_open(true) >= 0) because the
+# 4.19 kernel runs AppArmor as its only LSM, so /sys/fs/selinux does not exist. The Halium GSI ships
+# libselinux_stubs.so for this case; preload it. Same fix as the UBports google-sargo port
+# (overlay/system/android/vendor/etc/init/vndservicemanager.rc). Everything else is the vendor definition.
+service vndservicemanager /vendor/bin/vndservicemanager /dev/vndbinder
+    setenv LD_PRELOAD libselinux_stubs.so
+    class core
+    user system
+    group system readproc
+    task_profiles ServiceCapacityLow
+    onrestart class_restart main
+    onrestart class_restart hal
+    onrestart class_restart early_hal
+    shutdown critical

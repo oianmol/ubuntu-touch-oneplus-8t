@@ -1,0 +1,2 @@
+# Debug image: disable ADBD host key verification (as UBports prepare-fake-ota.sh does)
+ADBD_SECURE=0

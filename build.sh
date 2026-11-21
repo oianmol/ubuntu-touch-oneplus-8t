@@ -52,6 +52,14 @@ docker run --rm \
     # The kernel merges "halium.config" as a %.config target, which only searches arch/arm64/configs/.
     K=/src/work/workdir/downloads/android_kernel_oneplus_sm8250
     [ ! -d $K ] || cp halium.config $K/arch/arm64/configs/halium.config
+    # Kernel patches (device/patches/*.patch): applied once, skipped if already applied.
+    if [ -d $K ]; then
+      git config --global --add safe.directory $K
+      for p in /port/patches/*.patch; do
+        [ -e "$p" ] || continue
+        if git -C $K apply --check "$p" 2>/dev/null; then git -C $K apply "$p" && echo "applied $p"; else echo "skipping $p (already applied or does not apply)"; fi
+      done
+    fi
     # Kernel Makefile adds -no-integrated-as unless LLVM_IAS=1, which sends clang asm output to the GCC 4.9
     # binutils (rejects newer clang output: "junk at end of line"). Use the integrated assembler instead.
     # (No apostrophes in comments here: this whole block is one single-quoted bash -c string.)

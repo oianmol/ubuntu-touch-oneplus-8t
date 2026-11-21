@@ -1,0 +1,5 @@
+# OnePlus 8T (kebab): replaces the vendor init.qcom.usb.rc through the Halium overlay
+# (mount-halium-overlay bind-mounts /usr/share/halium-overlay/<path> over /<path> before the container starts).
+# The vendor script builds and binds USB gadget g1 (also in charger mode), which makes usb-moded fail with
+# "mkdir .../g1/configs/c.1: Device or resource busy". On Ubuntu Touch usb-moded owns the USB gadget,
+# so Android must not touch it.
