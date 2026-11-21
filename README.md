@@ -26,7 +26,7 @@ Tested on one KB2001 (Indian variant), 2026-11-21. "Verified" means checked on t
 | Display, punch-hole cutout, grid unit | Verified |
 | Touch | Verified (needed a libinput quirk) |
 | USB rescue network (NCM) | Verified |
-| Wi-Fi (QCA6390 via CNSS + qcacld) | Verified, connects and has internet |
+| Wi-Fi (QCA6390 via CNSS + qcacld) | Verified, connects and has internet; interface name pinned to `wlan0` so saved networks survive reboots |
 | Audio output (speaker) | Works at the HAL level: `paplay` is audible. **Notification sounds and ringtone previews fail**: `media-hub-server` aborts, see Lessons. Kernel patch `0002` fixes it: with it, booted from RAM, Settings sound previews play (confirmed by ear; not yet flashed to `boot_a`, log-level checks pending) |
 | Bluetooth, sensors, camera, modem/calls/SMS, fingerprint, haptics, flashlight | Not tested |
 | `apparmor.service` | Fixed with a drop-in (see Lessons): the service now runs its reload and succeeds. Loaded-profile count not yet checked with `aa-status` |
@@ -141,6 +141,12 @@ the persistent journal.
     never records a peer label for `AF_UNIX` (no `unix_stream_connect` hook; mainline got that in 6.7, Ubuntu kernels
     carry it as a patch). The session D-Bus daemon therefore has no label to give
     (`AppArmorSecurityContextUnknown`). Patch `0002` adds the hook. With it, booted via `fastboot boot` (RAM only), the Settings sound previews play; confirmed by ear on 2026-11-21. Not yet flashed to `boot_a`.
+
+11. **Saved Wi-Fi networks "forgot their password" after reboots.** The Wi-Fi interface is created as `wlan0` and
+    systemd-udevd sometimes renames it to `wlp1s0` depending on timing. Saved profiles (netplan-generated NetworkManager
+    files) are bound to the interface name, so after a rename NetworkManager ignores them and asks again. Pin the name
+    with `etc/systemd/network/10-kebab-wlan.link` (`OriginalName=wlan0`, `NamePolicy=`, `Name=wlan0`). One clean boot
+    verified; a second reboot is still to be checked.
 
 Other gotchas: never press the power key while testing (logind powers off); the kernel log buffer wraps in minutes on
 this phone because of touch-driver spam, so capture `dmesg` right after boot; the stock A/B retry counter can send you

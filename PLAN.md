@@ -178,6 +178,9 @@ driver only creates the interface after userspace writes ON to /dev/wlan (on And
 and /dev/wlan, then `echo ON > /dev/wlan`; same as nothing-spacewar and samsung-q2q. The interface shows up as wlan0 (wlp1s0 in
 one run, udev renaming varies), NetworkManager manages it, scanning and connecting from the Lomiri UI work, internet verified.
 Harmless noise: Android init's `modprobe qca_cld3_qca6390` fails because the driver is built in, not a module.
+Follow-up (2026-11-21): after a reboot NetworkManager asked for the password again. Saved profiles are netplan-generated and
+bound to `interface-name=wlan0`, but udev had renamed the device to `wlp1s0` (timing race). Fix: `etc/systemd/network/10-kebab-wlan.link`
+pinning the name to wlan0. First reboot after the fix: wlan0 up on the original profile, internet OK.
 Debugging aid: the kernel log buffer wraps in minutes ([TP] touch spam), so capture `dmesg > /tmp/early.log` right after boot.
 
 ### Audio and AppArmor (2026-11-21)

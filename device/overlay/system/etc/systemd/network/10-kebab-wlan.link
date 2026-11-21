@@ -1,0 +1,10 @@
+# The in-kernel qcacld-3.0 driver creates the Wi-Fi interface as wlan0 once /dev/wlan is written (see device-hacks).
+# systemd-udevd then sometimes renames it to the predictable name wlp1s0, depending on timing, so a saved
+# NetworkManager/netplan profile bound to one name stops matching after a reboot ("forgot the Wi-Fi password").
+# Keep the kernel name wlan0 (also what the Android HAL side expects).
+[Match]
+OriginalName=wlan0
+
+[Link]
+NamePolicy=
+Name=wlan0
