@@ -143,6 +143,21 @@ charger.target (battery logo, no display manager). `sudo reboot bootloader` from
 Next to do: touch/keyboard check, Wi-Fi, audio, Bluetooth, sensors, camera, modem (ofono/ril), apparmor.service,
 fingerprint, proper boot.img with AVB footer, UBports recovery, remove the empty-password debug access.
 
+### Lomiri shell crash root cause (2026-11-21): GPU nodes were root-only
+`lomiri --mode=full-greeter` died with SIGSEGV ~1 s after start. gdb on a core (gdb installed on the phone from
+Ubuntu arm64 debs; core dumps via DefaultLimitCORE + kernel.core_pattern=/tmp/core.%e.%p): strstr() on a garbage
+pointer inside /android/system/lib64/libEGL.so, i.e. the Adreno EGL driver returned a bad extension string.
+Cause: /dev/kgsl-3d0 and /dev/ion were crw------- root:root (on Android ueventd sets them; on UT the host udev creates
+nodes and the rootfs ships an EMPTY stub /usr/lib/udev/rules.d/70-android.rules "replaced by device-specific rules").
+The root-owned system compositor worked, the phablet shell and lightdm greeter crashed. Fix: overlay
+`usr/lib/udev/rules.d/70-android.rules` (device/overlay/.../halium-overlay/) opening kgsl/ion/hgsl/drm to 0666.
+Same approach in every UBports Qualcomm port (xiaomi-vayu 70-vayu.rules, sony-pdx225, samsung-q2q).
+Not the cause (checked): TLS padding (GLIBC_TUNABLES is set for the user manager; LD_PRELOAD=libtls-padding was not,
+adding it changed nothing), Android properties, fscrypt (the "not encrypted" message is only a status print;
+the session script then picks the unencrypted target).
+Still open: policykit-agent aborted via std::terminate before this fix (recheck), apparmor.service,
+audiosystem-passthrough-qti.service, Wi-Fi/audio/camera/modem rules (the vayu rules file has the full Qualcomm list).
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (verified hashes in `../kebab-lineage/dl`) from recovery.
