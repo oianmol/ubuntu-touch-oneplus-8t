@@ -70,7 +70,7 @@ MATRIX = [
     ]),
     ("Network", [
         ("bluetooth", "Bluetooth", "+-"),
-        ("flightMode", "Flight mode", "?"),
+        ("flightMode", "Flight mode", "+-"),
         ("fmRadio", "FM radio", "?"),
         ("hotspot", "Hotspot", "?"),
         ("nfc", "NFC", "?"),

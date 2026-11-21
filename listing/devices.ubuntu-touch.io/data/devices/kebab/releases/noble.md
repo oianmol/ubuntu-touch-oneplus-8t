@@ -90,7 +90,7 @@ portStatus:
       - id: "bluetooth"
         value: "+-"
       - id: "flightMode"
-        value: "?"
+        value: "+-"
       - id: "fmRadio"
         value: "?"
       - id: "hotspot"
