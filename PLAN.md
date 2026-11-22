@@ -232,6 +232,15 @@ NetworkRegistration.Status = denied (foreign SIM, probably roaming); Scan -> "Op
 mailbox) looked benign. `rmt_storage` is `stopped` (exits right away), not yet investigated. Next: test with a local SIM, then calls/SMS/data,
 then make ofono wait for the HAL after reboot (it logged "Connected to IRadioConfig" late, so the plugin seems to retry).
 
+### Waydroid (2026-11-22)
+Kernel was ready except two options: Waydroid on Halium needs the `anbox-*` binder device names (`CONFIG_ANDROID_BINDER_DEVICES`) and its network
+script needs `CONFIG_NETFILTER_XT_TARGET_CHECKSUM`. After both, `waydroid init -s VANILLA -f` succeeded (system 912 MB + HALIUM_13 vendor 41 MB from
+SourceForge, ~5 MB/s) and the container service starts. Session start failed first at `waydroid-net.sh` (CHECKSUM target), then, right after a reboot, with
+"Wayland socket doesn't exist" because it ran before Lomiri was up. Not yet confirmed: a running session and an app on screen.
+fastboot note: after this point fastboot uploads of the 71 MB boot image failed repeatedly (phone flapping in fastboot; cable, port and a hub made no
+difference; adb in normal mode moved the same image at 81 MB/s). Kernel updates #10 and #11 were written with `dd` to boot_a from the running system
+instead (backup first, `cmp` check, reboot). Modem confirmed present after a normal reboot (`/ril_0`).
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.

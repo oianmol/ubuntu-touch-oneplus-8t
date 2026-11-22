@@ -58,13 +58,15 @@ Tested on one KB2001 (Indian variant), 2026-11-21. A check mark means it was che
 - **Cellular:** the modem now works with ofono (see Lessons 13): ofono lists `/ril_0`, powered and online, and reads the SIM
   (present, no PIN). Network registration came back **`denied`** with a foreign (German, 262-01) SIM, which points at a roaming
   restriction and not the port; a manual operator scan failed. Nothing is verified yet (calls, SMS, data, carrier info, PIN
-  unlock), so the whole group is untested. Needs a test with a local SIM.
+  unlock), so the whole group is untested. Needs a test with a local SIM. The modem is found again after a normal reboot.
 - **Brightness, volume keys, microphone, battery:** brightness slider and volume keys confirmed by hand; the microphone
   records speech clearly above the noise floor (speech level is on the quiet side, RMS ~300 at 16 bit); UPower reports the
   battery percentage.
 - **Flight mode:** partial. The switch works in the UI, but in a test the Wi-Fi and Bluetooth radios stayed on (NetworkManager
   and the kernel rfkill switches did not change). Hotspot: first attempt created no access-point interface; not yet
   re-tested with a configured hotspot name and password.
+- **Waydroid:** the container side works after the kernel changes in Lessons 14 and 15 (the image downloads and `waydroid status` reports
+  `HALIUM_13`); a running session is not yet confirmed, so it stays untested above.
 - **MTP:** the Mac enumerates an `MTP` interface next to `ADB` and `mtp-server` runs, but browsing files has not been tried.
 - **Hardware present but not yet tried:** NFC (`nq-nci`, `nfcd`), GNSS HAL, Goodix fingerprint HAL, camera provider.
 - **Not attempted yet:** camera. Not done: a proper signed `boot.img` (a debug boot
@@ -137,6 +139,14 @@ fastboot erase userdata
 fastboot reboot
 ```
 
+**If `fastboot` uploads keep dropping** (`usb_write failed with status e00002ed` or `Status read failed` partway through a 70 MB
+image, with the phone appearing and disappearing in fastboot while `adb` is perfectly stable), update the kernel from the running
+system instead, which only uses `adb`: boot normally, `adb push exp/halium-ncm.img /tmp/new-boot.img`, compare the SHA-256 on both ends, then
+on the phone `sudo dd if=/dev/disk/by-partlabel/boot_a of=/userdata/boot_a.bak.img bs=4M count=18` (backup), `sudo dd if=/tmp/new-boot.img
+of=/dev/disk/by-partlabel/boot_a bs=4M conv=fsync`, `sync`, `sudo cmp -n <image size> /tmp/new-boot.img /dev/disk/by-partlabel/boot_a && echo MATCH`,
+`sudo reboot`. `boot_a` is 96 MiB; the image is 73 MB. Without fastboot you cannot test from RAM first, so use it for small, low-risk kernel changes
+and keep the backup (restore with the same `dd`, paths swapped).
+
 Boot with the **power key and no USB cable**. A cable at power-on makes the bootloader pass
 `androidboot.mode=charger`, and Ubuntu Touch then boots to `charger.target` (battery logo, no display manager). If it
 looks stuck, re-run `fastboot set_active a` to reset the A/B retry counter. From a running UT,
@@ -199,6 +209,15 @@ the persistent journal.
     (c) The binder plugin logged `Missing path for slot slot1/slot2` and made no modem until `/etc/ofono/binder.conf` gave each slot a
     `path`, a `slot` number and `extPlugin = qti` (HAL versions from the vendor manifest: `IRadio` 1.5, `IRadioConfig` 1.1,
     `IQtiRadio` 2.4). `getprop` works as the normal user on the host, which made the Android service state easy to read.
+14. **Waydroid refuses to initialise: `Binder node "binder" for waydroid not found`.** On a Halium device Waydroid's initializer picks
+    vendor type `HALIUM_13` and then only accepts its own `anbox-binder`, `anbox-vndbinder` and `anbox-hwbinder`, never the Halium
+    container's plain nodes. Add them to the kernel: `CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder,anbox-binder,anbox-hwbinder,anbox-vndbinder"`.
+    Ubuntu Touch's `mount-android-partitions` already symlinks every `/dev/binderfs/*binder` into `/dev`. `waydroid init -s VANILLA -f`
+    then downloads the LineageOS 20 system image (~912 MB) and a small `HALIUM_13` vendor image (~41 MB).
+15. **Waydroid session fails: `waydroid-net.sh start` fails.** The script ends with
+    `iptables -t mangle ... -j CHECKSUM --checksum-fill` under `set -e`, so without `CONFIG_NETFILTER_XT_TARGET_CHECKSUM` the whole bridge
+    setup aborts. Enable it (bridge, NAT, MASQUERADE, conntrack and `-m comment` were already on). The session also needs Lomiri's
+    `wayland-0` socket, so start it after the UI is up. Session start is not yet verified, see the matrix notes.
 
 Other gotchas: never press the power key while testing (logind powers off); the kernel log buffer wraps in minutes on
 this phone because of touch-driver spam, so capture `dmesg` right after boot; the stock A/B retry counter can send you
