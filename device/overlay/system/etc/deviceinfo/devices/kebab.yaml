@@ -28,6 +28,10 @@ KEBAB:
   FlashlightSwitchPath:
     - /sys/class/leds/led:switch_0/brightness
 
+  # Telephony: the Android 13 radio HAL speaks HIDL over binder, so ofono must use its binder plugin, not the legacy RIL
+  # socket plugin (/usr/libexec/lxc-android-config/ofonod-wrapper picks it from this key).
+  OfonoPlugin: binder
+
   CollapsedPanelHeight: 123
   DisplayCutoutsCollapsed:
   - 0 0 164 123

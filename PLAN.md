@@ -223,6 +223,15 @@ opening `/dev/vhci` because `CONFIG_BT_HCIVHCI` was off (also RFCOMM/BNEP/HIDP o
 endpoints. Flashed to boot_a (image sha256 0dbe1c36...) and re-verified after a normal boot: vhci, bluebinder active, hci0 powered. Wi-Fi stayed wlan0 and connected on that boot too.
 Open: pairing, A2DP audio, controller address `22:22:8B:8F:7D:46` looks like a Qualcomm default (no NV address).
 
+### Modem (2026-11-22): modem reaches ofono; registration denied with a roaming SIM
+The 8T's 5G modem is an external SDX55M on PCIe (`17cb:0306`, esoc0 + MHI channels already present, Android services netmgrd/ipacm/pd-mapper/
+ims* run). ofono saw zero modems for three reasons, all fixed in device/overlay: OfonoPlugin key (binder), qcrild `disabled` in the vendor rc,
+and a missing `/etc/ofono/binder.conf` ("Missing path for slot"). Result: `/ril_0` appears, Online+Powered, interfaces include
+NetworkRegistration/MessageManager/ConnectionManager, SIM present with no PIN (MCC/MNC 262/01), `/ril_1` absent (slot 2 empty).
+NetworkRegistration.Status = denied (foreign SIM, probably roaming); Scan -> "Operation failed". SIM I/O errors in the log (EF 6fb7
+mailbox) looked benign. `rmt_storage` is `stopped` (exits right away), not yet investigated. Next: test with a local SIM, then calls/SMS/data,
+then make ofono wait for the HAL after reboot (it logged "Connected to IRadioConfig" late, so the plugin seems to retry).
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.

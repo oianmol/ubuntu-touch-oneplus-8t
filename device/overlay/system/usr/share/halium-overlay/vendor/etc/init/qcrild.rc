@@ -1,0 +1,39 @@
+# Overlay of the vendor qcrild.rc (halium-overlay bind mount). The vendor image marks vendor.qcrild `disabled`: on a real
+# OnePlus the Android telephony framework starts it, and that framework does not exist under Ubuntu Touch, so nothing
+# started the radio HAL and ofono saw zero modems. Without `disabled`, `class_start main` brings it up. The second and
+# third SIM services below stay disabled, as in the vendor file.
+service vendor.qcrild /vendor/bin/hw/qcrild
+    class main
+    user radio
+    #ifdef OPLUS_FEATURE_OEM_QMI
+    #TanZhengpeng@NETWORK.REG.919197, 2016/06/04, modify for Oem qmi service
+    #group radio cache inet misc audio log readproc wakelock oem_2901
+    #else /* OPLUS_FEATURE_OEM_QMI */
+    group radio cache inet misc audio log readproc wakelock oem_2901 net_raw system root
+    #endif /* OPLUS_FEATURE_OEM_QMI */
+    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+
+service vendor.qcrild2 /vendor/bin/hw/qcrild -c 2
+    class main
+    user radio
+    disabled
+    #ifdef OPLUS_FEATURE_OEM_QMI
+    #TanZhengpeng@NETWORK.REG.919197, 2016/06/04, modify for Oem qmi service
+    #group radio cache inet misc audio log readproc wakelock oem_2901
+    #else /* OPLUS_FEATURE_OEM_QMI */
+    group radio cache inet misc audio log readproc wakelock oem_2901 net_raw system root
+    #endif /* OPLUS_FEATURE_OEM_QMI */
+    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
+
+service vendor.qcrild3 /vendor/bin/hw/qcrild -c 3
+    class main
+    user radio
+    disabled
+    #ifdef OPLUS_FEATURE_OEM_QMI
+    #TanZhengpeng@NETWORK.REG.919197, 2016/06/04, modify for Oem qmi service
+    #group radio cache inet misc audio log readproc wakelock oem_2901
+    #else /* OPLUS_FEATURE_OEM_QMI */
+    group radio cache inet misc audio log readproc wakelock oem_2901 net_raw system root
+    #endif /* OPLUS_FEATURE_OEM_QMI */
+
+    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW
