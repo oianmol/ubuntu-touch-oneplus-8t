@@ -236,7 +236,9 @@ then make ofono wait for the HAL after reboot (it logged "Connected to IRadioCon
 Kernel was ready except two options: Waydroid on Halium needs the `anbox-*` binder device names (`CONFIG_ANDROID_BINDER_DEVICES`) and its network
 script needs `CONFIG_NETFILTER_XT_TARGET_CHECKSUM`. After both, `waydroid init -s VANILLA -f` succeeded (system 912 MB + HALIUM_13 vendor 41 MB from
 SourceForge, ~5 MB/s) and the container service starts. Session start failed first at `waydroid-net.sh` (CHECKSUM target), then, right after a reboot, with
-"Wayland socket doesn't exist" because it ran before Lomiri was up. Not yet confirmed: a running session and an app on screen.
+"Wayland socket doesn't exist" because it ran before Lomiri was up. Then: session RUNNING, Android booted in ~15 s, guest on 192.168.240.x (DHCP from dnsmasq on waydroid0), `waydroid app launch com.android.documentsui` and
+`show-full-ui` both showed on the phone. The icon was the last problem: `Exec=waydroid` is a no-op, plain `show-full-ui` exits at once and the window dies with the
+launcher. Fixed with /usr/local/bin/waydroid-ui + a Waydroid.desktop overlay (verified via a wdtest entry started with lomiri-app-launch; real-icon reboot test pending).
 fastboot note: after this point fastboot uploads of the 71 MB boot image failed repeatedly (phone flapping in fastboot; cable, port and a hub made no
 difference; adb in normal mode moved the same image at 81 MB/s). Kernel updates #10 and #11 were written with `dd` to boot_a from the running system
 instead (backup first, `cmp` check, reboot). Modem confirmed present after a normal reboot (`/ril_0`).

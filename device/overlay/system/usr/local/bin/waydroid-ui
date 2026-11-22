@@ -1,0 +1,28 @@
+#!/bin/sh
+# Launcher for the "Waydroid" icon. The stock entry runs `waydroid` (a no-op) and a plain `waydroid show-full-ui` exits at once;
+# Lomiri then treats the launcher app as stopped and closes the Android window with it. So: start the session if it is not running
+# yet, show the Android UI, and stay alive for as long as the session runs.
+# Lomiri's launcher environment is not an interactive shell: HOME may be unset, and a failing `exec >file` would make this script exit
+# immediately. So set HOME if needed and only redirect to a log file when it is really writable.
+[ -n "$HOME" ] || HOME=/home/phablet
+export HOME
+LOG=/tmp/waydroid-ui.log
+if { : >>"$LOG"; } 2>/dev/null; then exec >>"$LOG" 2>&1; fi
+echo "=== $(date '+%F %T') start pid=$$ uid=$(id -u) cwd=$(pwd)"
+env | grep -E '^(PATH|HOME|XDG_RUNTIME_DIR|WAYLAND_DISPLAY|DBUS_SESSION_BUS_ADDRESS|DISPLAY|APP_ID|XDG_SESSION_TYPE)=' | sort
+command -v waydroid || echo "waydroid NOT in PATH"
+
+running() { waydroid status 2>/dev/null | grep -q "Session:.*RUNNING"; }
+
+if ! running; then
+    waydroid session start >/dev/null 2>&1 &
+    i=0
+    while ! running; do sleep 1; i=$((i + 1)); [ "$i" -gt 60 ] && exit 1; done
+    i=0
+    while [ "$(waydroid prop get sys.boot_completed 2>/dev/null | tail -1)" != "1" ]; do sleep 2; i=$((i + 1)); [ "$i" -gt 60 ] && break; done
+fi
+
+echo "$(date +%T) show-full-ui"; waydroid show-full-ui; echo "$(date +%T) show-full-ui rc=$?"
+sleep 3
+while running; do sleep 3; done
+echo "$(date +%T) session ended, exiting"

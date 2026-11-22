@@ -55,7 +55,7 @@ MATRIX = [
         ("videoAcceleration", "Hardware video playback", "?"),
     ]),
     ("Misc", [
-        ("waydroid", "Waydroid", "?"),
+        ("waydroid", "Waydroid", "+"),
         ("apparmorPatches", "AppArmor patches", "+-"),
         ("batteryPercentage", "Battery percentage", "+"),
         ("offlineCharging", "Offline charging", "?"),

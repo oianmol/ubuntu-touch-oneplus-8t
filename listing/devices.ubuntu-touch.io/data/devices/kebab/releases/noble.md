@@ -62,7 +62,7 @@ portStatus:
   - categoryName: "Misc"
     features:
       - id: "waydroid"
-        value: "?"
+        value: "+"
       - id: "apparmorPatches"
         value: "+-"
       - id: "batteryPercentage"
