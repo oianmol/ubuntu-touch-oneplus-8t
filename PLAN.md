@@ -243,6 +243,12 @@ fastboot note: after this point fastboot uploads of the 71 MB boot image failed 
 difference; adb in normal mode moved the same image at 81 MB/s). Kernel updates #10 and #11 were written with `dd` to boot_a from the running system
 instead (backup first, `cmp` check, reboot). Modem confirmed present after a normal reboot (`/ril_0`).
 
+### UBports Installer support (2026-11-22): researched, roadmap only
+Config = v2/devices/kebab.yml in ubports/installer-configs (schema in v2/schema/, `npm run validate`, local test `ubports-installer -f`). Official docs say the steps
+are undocumented. Gaps: proprietary vendor/odm hosting (maybe avoidable by reading stock EROFS in the 4.19 kernel), no recovery image, no `kebab` channel on the
+system-image server (device tarballs come from UBports community-ports CI), 2 GB GitHub release file limit, debug overlay. Written up in README "Roadmap".
+Decisions pending: scope = plan only; hosting = decide later.
+
 ## Rollback
 Fastboot is always reachable and the bootloader is unlocked, so a bad flash is recoverable by
 flashing a LineageOS 24 install (download a LineageOS 24 build for `kebab` and verify its hash) from recovery.

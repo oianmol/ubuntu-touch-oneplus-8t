@@ -244,6 +244,34 @@ Find them under `gitlab.com/ubports/porting/community-ports`.
 Issues and PRs welcome, especially from other SM8250 owners (OnePlus 8 / 8 Pro / 9 share this SoC and much of the
 vendor stack). Please include `journalctl -b` or `dmesg` captured right after boot.
 
+## Roadmap: UBports Installer support
+
+Not started; this is the plan. The installer reads one YAML file per device, `v2/devices/<codename>.yml` in
+[ubports/installer-configs](https://github.com/ubports/installer-configs), validated against its schema (`npm run build && npm run validate`,
+then `npm run lint`; `npm run checkdownloads` checks the URLs) and tested locally with `ubports-installer -f ./kebab.yml`. A new device goes in as a pull
+request. The official docs page for this says the steps are not documented yet, so the schema and existing configs (`sargo.yml`, `oneplus3.yml`) are the reference.
+Each config is a list of steps made of actions such as `fastboot:flashing_unlock`, `fastboot:reboot_fastboot`, `fastboot:create_logical_partition`,
+`fastboot:flash` (partition, file, group), `fastboot:set_active`, `core:download` (url + checksum), `core:manual_download` and `systemimage:install`.
+
+What stands between this port and a config that works:
+
+1. **Vendor and odm images.** Today they are ext4 repacks of Pixel Experience's Android 13 vendor, because the 4.19 kernel rejects the EROFS feature in the
+   original images. Hosting them means redistributing OnePlus/Qualcomm proprietary code, which needs a deliberate decision. Preferred direction (to investigate):
+   make the kernel read the original EROFS vendor, so users keep their own stock vendor and nothing proprietary is hosted. Fallback: the installer's
+   `core:manual_download` lets the user supply the file.
+2. **A recovery image.** The installer installs the rootfs by flashing a recovery, rebooting into it and running `systemimage:install`. We flash a prebuilt
+   rootfs over fastbootd instead, and have no recovery (the build has it disabled until a recovery ramdisk exists).
+3. **A system-image channel for `kebab`.** The OTA server has no `kebab` device, so the `channel.ini` in our debug overlay points nowhere. For community ports UBports
+   builds the device tarball in its own CI (the `ubports/porting/community-ports` group); the exact hand-over process still has to be confirmed with UBports.
+4. **Hosting and checksums.** Download URLs need a checksum each. GitHub release files are capped at 2 GB, and the system image is larger, so it would need
+   splitting. Location still undecided.
+5. **Clean-up first.** The debug overlay (`ADBD_SECURE=0`, empty-password SSH), the debug boot image and the unverified features in the matrix above should not
+   go into a public installer flow.
+
+Suggested order: decide the vendor question (1), build the recovery (2), move the build into the community-ports CI and get a device channel (3),
+write and locally test `kebab.yml` including an `unlock` step (`fastboot:flashing_unlock`, with a data-wipe warning), then pass the schema checks and open the
+pull request. A listing on [devices.ubuntu-touch.io](https://devices.ubuntu-touch.io/) (draft in `listing/`) should come first.
+
 ## License
 
 MIT, see `LICENSE`. The exception is `device/patches/` (see the README there): those files modify the Linux kernel and stay
